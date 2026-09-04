@@ -1,0 +1,27 @@
+# The build this repository has to pass. It runs on the supported floor and the
+# current release of the toolchain, because a client library that only builds on
+# the version its author happened to have installed is a support ticket waiting.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.1", "3.2", "3.3", "3.4"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      # The gem has no runtime dependencies, so loading it is the whole check:
+      # it proves every file parses and the constants resolve.
+      - run: ruby -Ilib -e "require 'ironeye'; puts IronEye::VERSION"
+      - run: gem build ironeye.gemspec
